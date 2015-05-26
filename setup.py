@@ -17,7 +17,7 @@ limitations under the License.
 Setup for C2Py
 """
 
-from setuptools import setup, find_packages
+from setuptools import setup
 # To use a consistent encoding
 from codecs import open
 from os import path
