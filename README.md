@@ -73,7 +73,12 @@ To compile and receive the relevant files:
 
 2. Run the executable to generate a binary file which the test will read. Should be named 'output'.
 
-3. Run test.py. Check its output to the console.
+3. In Python console, run the following:
+   ```python
+   from C2Py.tests import test
+   test.run_test()
+   ```
+   Expect test output to the console. All tests should pass.
  
 This package has been tested with gcc 4.9.2, Python 2.6.6 and 2.7.9
 
