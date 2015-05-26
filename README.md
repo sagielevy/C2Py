@@ -75,7 +75,7 @@ To compile and receive the relevant files:
 
 3. Run test.py. Check its output to the console.
  
-This package has been tested with gcc 4.9.2, Python 2.7.9 (will be tested in other versions in the future)
+This package has been tested with gcc 4.9.2, Python 2.6.6 and 2.7.9
 
 ## Not Supported (nor will be)
 Some potential features will unfortunately NOT be supported by this package:
