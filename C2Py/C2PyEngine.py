@@ -22,8 +22,8 @@ import string
 import ctypes
 
 __author__ = "Sagie Levy"
-__copyright__ = "Copyright 2015, C2Py"
-__license__ = "MIT"
+__copyright__ = "Copyright 2015, Tandem Group Software"
+__license__ = "Apache"
 
 # Global methods and 'constants'
 HIERARCHY_SEPARATOR = "."

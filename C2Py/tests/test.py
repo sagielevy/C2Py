@@ -23,8 +23,8 @@ from C2Py import C2PyHandler
 import ctypes
 
 __author__ = "Sagie Levy"
-__copyright__ = "Copyright 2015, C2Py"
-__license__ = "MIT"
+__copyright__ = "Copyright 2015, Tandem Group Software"
+__license__ = "Apache"
 
 # Globals
 MEMORY_OFFSET = 0

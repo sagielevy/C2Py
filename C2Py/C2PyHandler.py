@@ -21,8 +21,8 @@ import os.path as path
 import C2PyEngine
 
 __author__ = "Sagie Levy"
-__copyright__ = "Copyright 2015, C2Py"
-__license__ = "MIT"
+__copyright__ = "Copyright 2015, Tandem Group Software"
+__license__ = "Apache"
 
 
 class C2pyStructsAbsHandler(object):
