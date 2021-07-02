@@ -18,7 +18,7 @@ This module wraps up the handling of the C2Py converter to make C2Py library API
 """
 
 import os.path as path
-import C2PyEngine
+from C2Py import C2PyEngine
 
 __author__ = "Sagie Levy"
 __copyright__ = "Copyright 2015, Tandem Group Software"

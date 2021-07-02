@@ -20,10 +20,17 @@ This module is the core of the C2Py library and does all the heavy logic of stru
 import re
 import string
 import ctypes
+import sys
 
 __author__ = "Sagie Levy"
 __copyright__ = "Copyright 2015, Tandem Group Software"
 __license__ = "Apache"
+
+if sys.version_info.major > 2:
+    from C2Py import ctypes_enum
+    xrange = range
+    string.atoi = int
+    long = int
 
 # Global methods and 'constants'
 HIERARCHY_SEPARATOR = "."
@@ -69,8 +76,7 @@ BASIC_TYPES_REGEX = re.compile(
 COMMENT_REMOVE = re.compile(r"//.*", re.MULTILINE)
 FIELDS_REGEX = re.compile(
     r"\s*(static|const)?\s*(static|const)?\s*(volatile)?\s*(?P<KEYWORD>struct|union|enum)?\s*(?P<TYPE>.*?(\s*\*)?)\s*(?:\{(?P<SUB_FIELDS>.*?)\}\s*)?\s*(?P<NAME>\w+)?\s*(?:\s*(?P<ARRAY>\[[^\n\r;]+)\s*\s*)*(?::\s*(?P<BIT_FIELD>[^\[\]\{\};\n\r]+)?)?;",
-    re.S)
-
+    re.U)
 
 def is_readable_char(numeric_value):
     """
@@ -328,13 +334,19 @@ class C2PyConverter(object):
                     # Keep previous, init with -1
                     prev_enum_val = -1
 
+                    members = dict()
+
                     # Go over all enum fields
                     for i, enum_data in enumerate(ENUM_TYPES_REGEX.finditer(match.group("FIELDS"))):
                         # Create global variables from enum fields, so they will be available for all! Viva La France!
                         if enum_data.group("DEF") is None:
                             enum_value = prev_enum_val + 1
                         else:
-                            trimmed_code_line = enum_data.group("DEF").translate(None, " \t\n\r")
+                            trimmed_code_line = enum_data.group("DEF")
+                            if sys.version_info.major > 2:
+                                trimmed_code_line = trimmed_code_line.translate(str.maketrans('','', " \t\n\r"))
+                            else:
+                                trimmed_code_line = trimmed_code_line.translate(None, " \t\n\r")
 
                             # Get all the operands in the string
                             for operand in re.finditer("\w*", trimmed_code_line):
@@ -362,6 +374,9 @@ class C2PyConverter(object):
                         if e_field_name not in globals():
                             globals()[e_field_name] = enum_value
                             prev_enum_val = enum_value
+                        members[e_field_name] = enum_value
+                    cls = ctypes_enum.Enum(enum_name, members).cls
+                    globals()[enum_name] = cls
 
         for match in BASIC_TYPES_REGEX.finditer(self._content):
             curr_var_type = match.group("TYPE").strip(" \t\n\r")
@@ -474,7 +489,8 @@ class C2PyConverter(object):
                     curr_type = ctypes.c_void_p
                 elif field_type in self._enum_types:
                     # Treat all enums as signed int. This is compiler dependant really but this would do
-                    curr_type = FORMAT_MAP.get("int")
+                    # curr_type = FORMAT_MAP.get("int")
+                    curr_type = eval(field_type)
                 else:
                     # Add type if it is a primitive.
                     curr_type = self._get_type(field_type)
@@ -534,7 +550,10 @@ class C2PyConverter(object):
             curr_dimension = match.group()
 
             # First off, convert all brackets to parenthesises
-            curr_dimension = curr_dimension.translate(None, "[]")
+            if sys.version_info.major > 2:
+                curr_dimension = curr_dimension.translate(str.maketrans('','', "[]"))
+            else:
+                curr_dimension = curr_dimension.translate(None, "[]")
 
             # If length is a number, append it and move on to the next dimension
             if curr_dimension.isdigit():
@@ -585,7 +604,8 @@ class C2PyConverter(object):
             result = None
 
             # Check for expression. such as (a * b) + 4... etc.
-            exec "result = " + field_length
+            # exec("result = " + field_length)
+            result = eval(field_length)
             return result
         except:
             raise Exception("expression unsupported: " + field_length)

@@ -77,15 +77,15 @@ class C2PyTest(unittest.TestCase):
                                      ("b", ctypes.c_char),
                                      ("c", ctypes.c_double)]
         to_compare = to_compare_class()
-        to_compare.a = 4294967295L
-        to_compare.b = "b"
+        to_compare.a = 4294967295
+        to_compare.b = bytes("b", 'utf-8')
         to_compare.c = 2.5
 
         try:
             self.assertEqual(test_struct.a, to_compare.a)
             self.assertEqual(test_struct.b, ord(to_compare.b))
             self.assertEqual(test_struct.c, to_compare.c)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -115,8 +115,8 @@ class C2PyTest(unittest.TestCase):
         to_compare = to_compare_class()
         to_compare.a = 10
         to_compare.c = 42.0
-        to_compare.b.a = 456L
-        to_compare.b.b = "r"
+        to_compare.b.a = 456
+        to_compare.b.b = bytes("r", 'utf-8')
         to_compare.b.c = 0.1
 
         try:
@@ -125,7 +125,7 @@ class C2PyTest(unittest.TestCase):
             self.assertEqual(test_struct.b.a, to_compare.b.a)
             self.assertEqual(test_struct.b.b, ord(to_compare.b.b))
             self.assertEqual(test_struct.b.c, to_compare.b.c)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -153,9 +153,9 @@ class C2PyTest(unittest.TestCase):
 
         to_compare = to_compare_class()
         to_compare.a = -2
-        to_compare.b = "a"
-        to_compare.c.a = 634534L
-        to_compare.c.b = "6"
+        to_compare.b = bytes("a", 'utf-8')
+        to_compare.c.a = 634534
+        to_compare.c.b = bytes("6", 'utf-8')
         to_compare.c.c = -469083479.5894
 
         try:
@@ -164,7 +164,7 @@ class C2PyTest(unittest.TestCase):
             self.assertEqual(test_struct.c.a, to_compare.c.a)
             self.assertEqual(test_struct.c.b, ord(to_compare.c.b))
             self.assertEqual(test_struct.c.c, to_compare.c.c)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -204,7 +204,7 @@ class C2PyTest(unittest.TestCase):
 
         to_compare.recursion.a = 2
         to_compare.recursion.b = ord("w")
-        to_compare.recursion.c.a = 634534L
+        to_compare.recursion.c.a = 634534 # Python3
         to_compare.recursion.c.b = ord("6")
         to_compare.recursion.c.c = 469083479089.5894
 
@@ -220,7 +220,7 @@ class C2PyTest(unittest.TestCase):
             self.assertEqual(test_struct.recursion.c.a, to_compare.recursion.c.a)
             self.assertEqual(test_struct.recursion.c.b, to_compare.recursion.c.b)
             self.assertEqual(test_struct.recursion.c.c, to_compare.recursion.c.c)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -268,7 +268,7 @@ class C2PyTest(unittest.TestCase):
             to_compare.firstArr[0][2] = 100
             test_struct.firstArr[0][2] = 100
             self.assertEqual(test_struct.firstArr[0][2], to_compare.firstArr[0][2])
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -292,7 +292,7 @@ class C2PyTest(unittest.TestCase):
         to_compare.aPartOne = 2000
         to_compare.aPartTwo = 1000
         to_compare.aPartThree = 1
-        to_compare.someChar = 'The Dude abides'
+        to_compare.someChar = bytes('The Dude abides', 'utf-8')
 
         try:
             self.assertEqual(test_struct.aPartOne, to_compare.aPartOne)
@@ -303,7 +303,7 @@ class C2PyTest(unittest.TestCase):
             # The only thing we can do is check that 'b' is a pointer (size varies depending on OS - 32 or 64 bits)
             self.assertEqual(ctypes.sizeof(test_struct._fields_[-1][1]), ctypes.sizeof(ctypes.c_void_p))
             # self.assertEqual(test_struct.someChar, to_compare.someChar)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -329,10 +329,10 @@ class C2PyTest(unittest.TestCase):
         to_compare.thirdEnum = 8
 
         try:
-            self.assertEqual(test_struct.firstEnum, to_compare.firstEnum)
-            self.assertEqual(test_struct.secondEnum, to_compare.secondEnum)
-            self.assertEqual(test_struct.thirdEnum, to_compare.thirdEnum)
-        except AttributeError, ex:
+            self.assertEqual(test_struct.firstEnum.value, to_compare.firstEnum)
+            self.assertEqual(test_struct.secondEnum.value, to_compare.secondEnum)
+            self.assertEqual(test_struct.thirdEnum.value, to_compare.thirdEnum)
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -359,10 +359,10 @@ class C2PyTest(unittest.TestCase):
         to_compare.explicitNames.thirdEnum = -500
 
         try:
-            self.assertEqual(test_struct.explicitNames.firstEnum, to_compare.explicitNames.firstEnum)
-            self.assertEqual(test_struct.explicitNames.secondEnum, to_compare.explicitNames.secondEnum)
-            self.assertEqual(test_struct.explicitNames.thirdEnum, to_compare.explicitNames.thirdEnum)
-        except AttributeError, ex:
+            self.assertEqual(test_struct.explicitNames.firstEnum.value, to_compare.explicitNames.firstEnum)
+            self.assertEqual(test_struct.explicitNames.secondEnum.value, to_compare.explicitNames.secondEnum)
+            self.assertEqual(test_struct.explicitNames.thirdEnum.value, to_compare.explicitNames.thirdEnum)
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -390,7 +390,7 @@ class C2PyTest(unittest.TestCase):
             self.assertEqual(test_struct.very, to_compare.very)
             self.assertEqual(test_struct.small, to_compare.small)
             self.assertEqual(test_struct.large, to_compare.large)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -433,7 +433,7 @@ class C2PyTest(unittest.TestCase):
             # Validate union functionality: Change values of fields of 'fieldTwo', check their effects on 'fieldOne'
             test_struct.fieldTwo.a = 100
             self.assertEqual(test_struct.fieldOne[0], 100)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -451,10 +451,10 @@ class C2PyTest(unittest.TestCase):
         to_compare_class = _generate_new_struct()
         to_compare_class._fields_ = [("string", ctypes.c_char * 13)]
         to_compare = to_compare_class()
-        to_compare.string = "Hello, world\0"
+        to_compare.string = bytes("Hello, world\0", 'utf-8')
         try:
-            self.assertTrue(all(chr(origin) == test for (origin, test) in zip(test_struct.string, to_compare.string)))
-        except AttributeError, ex:
+            self.assertTrue(all(origin == test for (origin, test) in zip(test_struct.string, to_compare.string)))
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -488,7 +488,7 @@ class C2PyTest(unittest.TestCase):
         try:
             # No attributes at all for this struct
             self.assertEqual(len(test_struct._fields_), 0)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -547,7 +547,7 @@ class C2PyTest(unittest.TestCase):
             self.assertEqual(test_struct.recursion.c.a, to_compare.recursion.c.a)
             self.assertEqual(test_struct.recursion.c.b, to_compare.recursion.c.b)
             self.assertEqual(test_struct.recursion.c.c, to_compare.recursion.c.c)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -567,7 +567,7 @@ class C2PyTest(unittest.TestCase):
             self.assertTrue(test_struct.otherHeaderFileStruct.a == 0)
             self.assertTrue(test_struct.otherHeaderFileStruct.b == 0)
             self.assertTrue(test_struct.otherHeaderFileStruct.c == 0)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -583,7 +583,7 @@ class C2PyTest(unittest.TestCase):
             self.assertTrue(test_struct.c.a == 0)
             self.assertTrue(test_struct.c.b == 0)
             self.assertTrue(test_struct.c.c == 0)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -627,7 +627,7 @@ class C2PyTest(unittest.TestCase):
             self.assertEqual(test_struct.fieldTwo.b.a, to_compare.fieldTwo.b.a)
             self.assertEqual(test_struct.fieldTwo.b.b, to_compare.fieldTwo.b.b)
             self.assertEqual(test_struct.fieldTwo.b.c, to_compare.fieldTwo.b.c)
-        except AttributeError, ex:
+        except AttributeError as ex:
             # Fail the test
             self.assertFalse(True, ex)
 
@@ -669,6 +669,7 @@ def run_test():
     suite.addTest(C2PyTest('test14', runtime_buffer_handler))
 
     unittest.TextTestRunner().run(suite)
+
 
 if __name__ == "__main__":
     run_test()
