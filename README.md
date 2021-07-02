@@ -10,7 +10,7 @@ This project could be most likely be used for automation testing for C projects.
 Another use is perhaps debug - reading and understanding a memory dump better by importing it to readable struct-like classes.
 
 ## Installation
-This package requires Python 2.6.* - 2.7.*
+This package requires Python 3.*
 Simply download this project, open cmd or terminal and enter:
 ```console
   python /path/to/C2Py/setup.py install
@@ -80,7 +80,7 @@ To compile and receive the relevant files:
    ```
    Expect test output to the console. All tests should pass.
  
-This package has been tested with gcc 4.9.2, Python 2.6.6 and 2.7.9
+This package has been tested with gcc 4.9.2, Python 3.8.5
 
 ## Not Supported (nor will be)
 Some potential features will unfortunately NOT be supported by this package:
