@@ -86,17 +86,17 @@ typedef struct Test6
 	char* someChar;
 } Test6, *PointerToTest6;
 
-// No typedef for this one
-struct Test7
-{
-	// Test different enums
-	otherEnum firstEnum;
-	enum someEnum secondEnum;
-	otherEnum thirdEnum;
-};
-
+// Recursive declaration of structs
 struct Test8
 {
+  // No typedef for this one
+  struct Test7
+  {
+	  // Test different enums
+	  otherEnum firstEnum;
+	  enum someEnum secondEnum;
+  	  otherEnum thirdEnum;
+  };
 	struct Test7 explicitNames;
 };
 

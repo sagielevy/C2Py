@@ -140,6 +140,13 @@ def recursive_print(obj_to_parse, header="", obj_type=None):
         return str(obj_to_parse)
 
 
+class StructMetadata(object):
+    def __init__(self, name: str, struct_type: str, fields: str):
+        self.name = name
+        self.struct_type = struct_type
+        self.fields = fields
+
+
 class C2PyConverter(object):
     """
     This class processes C code (without macros and other defines - a.k.a intermediate files (*.i)) and creates a
@@ -225,8 +232,8 @@ class C2PyConverter(object):
         self._content = ""
         self._basics_dic = {}
         self._enum_types = []
-        self._structures_dic = {}
-        self._pointer_struct_dic = {}
+        self._structures_dic = {str: StructMetadata}
+        self._pointer_struct_dic = {str: StructMetadata}
         self._pragma_pack_dic = {}
         self._pragma_stack = []
         self._result = None
@@ -270,8 +277,8 @@ class C2PyConverter(object):
                 if struct_type in self._structures_dic else self._pointer_struct_dic
 
             self._dynamic_structure = self._extract_instance(
-                matching_struct_dict[struct_type].group("FIELDS").strip(" \t\n\r"),
-                matching_struct_dict[struct_type].group("TYPE").strip(" \t\n\r"),
+                matching_struct_dict[struct_type].fields,
+                matching_struct_dict[struct_type].struct_type,
                 struct_type)
 
         self._result = self._create_union_result(self._dynamic_structure,
@@ -298,97 +305,118 @@ class C2PyConverter(object):
 
         # Go over all the structs unions and enums in the code
         for match in STRUCTS_REGEX.finditer(self._content):
-            for name_or_ptr in match.group("NAME").split(","):
-
-                # Check that string isn't null or just whitespace
-                # And that the name is of a union or a struct, but NOT an enum
-                if name_or_ptr not in ("", None) and match.group("TYPE").strip(" \t\n\r") in ("struct", "union"):
-                    name_or_ptr = name_or_ptr.strip(" \t\n\r")
-
-                    # Don't cause multiple keys
-                    if name_or_ptr in self._structures_dic:
-                        break
-
-                    # Pointers to pointers dict and struct names to struct dict
-                    if POINTER_MARK not in name_or_ptr:
-                        self._structures_dic[name_or_ptr] = match
-                    else:
-                        self._pointer_struct_dic[name_or_ptr.replace(POINTER_MARK, "")] = match
-
-            # If no break occurred, that is, if NAME tag wasn't found or TYPE was not struct or union
-            else:
-                # If this is a struct or a union, it may not have a typedef in which 'struct NAME2' must be used
-                if match.group("TYPE") in ("struct", "union") and match.group("NAME") in ("", None):
-                    # Set the default name as the name of the struct
-                    self._structures_dic[match.group("NAME2").strip(" \t\n\r")] = match
-
-                # If type is actually an enum, add it to the fields dictionary for future use first
-                elif match.group("TYPE") == "enum":
-                    # Get the enum name
-                    enum_name = match.group("NAME").strip(" \t\n\r") if match.group("NAME") not in ("", None) \
-                        else match.group("NAME2").strip(" \t\n\r")
-
-                    # Add to the list of known enums
-                    self._enum_types.append(enum_name)
-
-                    # Keep previous, init with -1
-                    prev_enum_val = -1
-
-                    members = dict()
-
-                    # Go over all enum fields
-                    for i, enum_data in enumerate(ENUM_TYPES_REGEX.finditer(match.group("FIELDS"))):
-                        # Create global variables from enum fields, so they will be available for all! Viva La France!
-                        if enum_data.group("DEF") is None:
-                            enum_value = prev_enum_val + 1
-                        else:
-                            trimmed_code_line = enum_data.group("DEF")
-                            if sys.version_info.major > 2:
-                                trimmed_code_line = trimmed_code_line.translate(str.maketrans('','', " \t\n\r"))
-                            else:
-                                trimmed_code_line = trimmed_code_line.translate(None, " \t\n\r")
-
-                            # Get all the operands in the string
-                            for operand in re.finditer("\w*", trimmed_code_line):
-                                operand = operand.group()
-
-                                # Check if string is actually a number with the "UL" extension at the end
-                                if operand.endswith("UL") and self._is_number(operand[:-2]):
-                                    # Also remove ...UL because it means Unsigned Long and python can't parse it
-                                    trimmed_code_line = trimmed_code_line.replace(operand, operand.rstrip("UL"))
-
-                            # Reset variable. If eval fails, this value shall be placed
-                            enum_value = DEFAULT_ENUM_VAL
-
-                            # Remove bad spaces and stuff like that. 
-                            try:
-                                enum_value = eval(trimmed_code_line)
-                            except:
-                                # Can't evaluate this line of code..
-                                # This must be some kind of crazy corner case code that's probably not very important
-                                # If it is, please implement some logic that would allow evaluating this. Thanks!
-                                print("Can't evaluate the following string: " + trimmed_code_line)
-
-                        # Add enum value to the globals of this module for future use.. Yes, it's necessary.
-                        e_field_name = enum_data.group("NAME").strip(" \t\n\r")
-                        if e_field_name not in globals():
-                            globals()[e_field_name] = enum_value
-                            prev_enum_val = enum_value
-                        members[e_field_name] = enum_value
-                    cls = ctypes_enum.Enum(enum_name, members).cls
-                    globals()[enum_name] = cls
+            self._parse_struct(match)
 
         for match in BASIC_TYPES_REGEX.finditer(self._content):
-            curr_var_type = match.group("TYPE").strip(" \t\n\r")
+            self._parse_basic_type(match)
 
-            if curr_var_type not in self._basics_dic:
-                self._basics_dic[curr_var_type] = match
+    def _parse_struct(self, struct_match):
+        for name_or_ptr in struct_match.group("NAME").split(","):
+            struct_type = struct_match.group("TYPE").strip(" \t\n\r")
 
-                # Check for additional types
-                additional_types = match.group("ADDITIONAL_TYPES")
-                if additional_types is not None:
-                    for currAdditional in additional_types.split(","):
-                        self._basics_dic[currAdditional.strip(" \t\n\r")] = match
+            # Check that string isn't null or just whitespace
+            # And that the name is of a union or a struct, but NOT an enum
+            if name_or_ptr not in ("", None) and struct_type in ("struct", "union"):
+                name_or_ptr = name_or_ptr.strip(" \t\n\r")
+
+                # Don't cause multiple keys
+                if name_or_ptr in self._structures_dic:
+                    break
+
+                struct_fields = STRUCTS_REGEX.sub("", struct_match.group("FIELDS").strip(" \t\n\r"))
+
+                if POINTER_MARK not in name_or_ptr:
+                    self._structures_dic[name_or_ptr] = StructMetadata(name_or_ptr, struct_type, struct_fields)
+                else:
+                    final_name = name_or_ptr.replace(POINTER_MARK, "")
+                    self._pointer_struct_dic[final_name] = StructMetadata(final_name, struct_type, struct_fields)
+
+        # If no break occurred, that is, if NAME tag wasn't found or TYPE was not struct or union
+        else:
+            struct_type = struct_match.group("TYPE").strip(" \t\n\r")
+
+            # If this is a struct or a union, it may not have a typedef in which 'struct NAME2' must be used
+            if struct_type in ("struct", "union") and struct_match.group("NAME") in ("", None):
+                # Set the default name as the name of the struct
+                struct_name = struct_match.group("NAME2").strip(" \t\n\r")
+                struct_fields = STRUCTS_REGEX.sub("", struct_match.group("FIELDS").strip(" \t\n\r"))
+
+                self._structures_dic[struct_name] = StructMetadata(struct_name, struct_type, struct_fields)
+
+            # If type is actually an enum, add it to the fields dictionary for future use first
+            elif struct_match.group("TYPE") == "enum":
+                self._parse_enum(struct_match)
+
+        for inner_struct_match in STRUCTS_REGEX.finditer(struct_match.group("FIELDS")):
+            self._parse_struct(inner_struct_match)
+
+    def _parse_enum(self, enum_match):
+        # Get the enum name
+        enum_name = enum_match.group("NAME").strip(" \t\n\r") if enum_match.group("NAME") not in ("", None) \
+            else enum_match.group("NAME2").strip(" \t\n\r")
+
+        # Add to the list of known enums
+        self._enum_types.append(enum_name)
+
+        # Keep previous, init with -1
+        prev_enum_val = -1
+
+        members = dict()
+
+        # Go over all enum fields
+        for i, enum_data in enumerate(ENUM_TYPES_REGEX.finditer(enum_match.group("FIELDS"))):
+            # Create global variables from enum fields, so they will be available for all! Viva La France!
+            if enum_data.group("DEF") is None:
+                enum_value = prev_enum_val + 1
+            else:
+                trimmed_code_line = enum_data.group("DEF")
+                if sys.version_info.major > 2:
+                    trimmed_code_line = trimmed_code_line.translate(str.maketrans('', '', " \t\n\r"))
+                else:
+                    trimmed_code_line = trimmed_code_line.translate(None, " \t\n\r")
+
+                # Get all the operands in the string
+                for operand in re.finditer("\w*", trimmed_code_line):
+                    operand = operand.group()
+
+                    # Check if string is actually a number with the "UL" extension at the end
+                    if operand.endswith("UL") and self._is_number(operand[:-2]):
+                        # Also remove ...UL because it means Unsigned Long and python can't parse it
+                        trimmed_code_line = trimmed_code_line.replace(operand, operand.rstrip("UL"))
+
+                # Reset variable. If eval fails, this value shall be placed
+                enum_value = DEFAULT_ENUM_VAL
+
+                # Remove bad spaces and stuff like that.
+                try:
+                    enum_value = eval(trimmed_code_line)
+                except:
+                    # Can't evaluate this line of code..
+                    # This must be some kind of crazy corner case code that's probably not very important
+                    # If it is, please implement some logic that would allow evaluating this. Thanks!
+                    print("Can't evaluate the following string: " + trimmed_code_line)
+
+            # Add enum value to the globals of this module for future use.. Yes, it's necessary.
+            e_field_name = enum_data.group("NAME").strip(" \t\n\r")
+            if e_field_name not in globals():
+                globals()[e_field_name] = enum_value
+                prev_enum_val = enum_value
+            members[e_field_name] = enum_value
+
+        cls = ctypes_enum.Enum(enum_name, members).cls
+        globals()[enum_name] = cls
+
+    def _parse_basic_type(self, type_match):
+        curr_var_type = type_match.group("TYPE").strip(" \t\n\r")
+
+        if curr_var_type not in self._basics_dic:
+            self._basics_dic[curr_var_type] = type_match
+
+            # Check for additional types
+            additional_types = type_match.group("ADDITIONAL_TYPES")
+            if additional_types is not None:
+                for currAdditional in additional_types.split(","):
+                    self._basics_dic[currAdditional.strip(" \t\n\r")] = type_match
 
     @staticmethod
     def _is_number(value):
@@ -472,11 +500,9 @@ class C2PyConverter(object):
                 # If field is a struct, set a new class/struct in the field
                 if field_type in self._structures_dic:
                     # Remove whitespace before using the struct code, because apparently it may cause
-                    # "Catastrophic Backtracking"!! Very scary                    
-                    curr_struct = self._extract_instance(self._structures_dic[field_type].
-                                                         group("FIELDS").strip(" \t\n\r"),
-                                                         self._structures_dic[field_type].
-                                                         group("TYPE").strip(" \t\n\r"),
+                    # "Catastrophic Backtracking"!! Very scary
+                    curr_struct = self._extract_instance(self._structures_dic[field_type].fields,
+                                                         self._structures_dic[field_type].struct_type,
                                                          field_type)
                     # Add an array or a single value
                     if field_length not in (None, ""):
@@ -575,10 +601,8 @@ class C2PyConverter(object):
                         sizeof_value = ctypes.sizeof(self._get_type(sizeof_inner))
                     else:
                         # The item is a struct. Calculate the struct size
-                        sizeof_value = ctypes.sizeof(self._extract_instance(self._structures_dic[sizeof_inner].
-                                                                            group("FIELDS").strip(" \t\n\r"),
-                                                                            self._structures_dic[sizeof_inner].
-                                                                            group("TYPE").strip(" \t\n\r"),
+                        sizeof_value = ctypes.sizeof(self._extract_instance(self._structures_dic[sizeof_inner].fields,
+                                                                            self._structures_dic[sizeof_inner].struct_type,
                                                                             sizeof_inner))
 
                     # Remove the sizeof text, replace it with the actual size
