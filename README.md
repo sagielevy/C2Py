@@ -75,7 +75,7 @@ To compile and receive the relevant files:
 
 3. In Python console, run the following:
    ```python
-   from C2Py.tests import test
+   import C2Py.tests.test as test
    test.run_test()
    ```
    Expect test output to the console. All tests should pass.
