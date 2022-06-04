@@ -67,7 +67,7 @@ FORMAT_MAP = {
 # Important regular expressions to parse C structs to groups of fields (in strings) and from them create formats
 # Not broken down to multiple lines for readability
 STRUCTS_REGEX = re.compile(
-    r"(typedef\s+)?(?P<PACKED>\w+)?\s*(?P<TYPE>union|struct|enum)\s+(?P<NAME2>\w+)\s*\{(?P<FIELDS>.*?(?:\{.*?\}.*?)*?)\}(?P<NAME>[^;]*);",
+    r"(typedef\s+)?(?P<PACKED>\w+)?\s*(?P<TYPE>union|struct|enum)\s+(?P<NAME2>\w*)\s*\{(?P<FIELDS>.*?(?:\{.*?\}.*?)*?)\}\s*(?P<NAME>(?:[^;\s]|\s*,\s*)*)\s*;",
     re.S)
 ENUM_TYPES_REGEX = re.compile(r"(?P<NAME>\w+)\s*(=(?P<DEF>.[^,]*)|,|$)", re.S)
 BASIC_TYPES_REGEX = re.compile(

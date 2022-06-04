@@ -127,4 +127,28 @@ typedef struct Test12
 	char omittedSize[0];
 } *Test12;
 
+typedef struct {
+    int member;
+} Test15;
+
+typedef struct {
+    int member;
+} Test16 ;
+
+typedef struct Test17 {
+    int member;
+} Test17;
+
+typedef struct Test18{
+    int member;
+} Test18 ;
+
+struct Test19 {
+    int member;
+} ;
+
+struct Test20 {
+    int member;
+};
+
 #endif
