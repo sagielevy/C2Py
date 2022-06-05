@@ -633,6 +633,46 @@ class C2PyTest(unittest.TestCase):
 
         self.assertEqual(size_of, ctypes.sizeof(to_compare))
 
+    def impl_test_whitespace(self, struct_name):
+        global MEMORY_OFFSET
+
+        test_struct = self.c2py_handler.convert(struct_name, offset=MEMORY_OFFSET)
+        size_of = ctypes.sizeof(test_struct)
+        MEMORY_OFFSET += size_of
+        print(test_struct)
+        print("Size of struct: " + str(size_of) + "\n")
+
+        to_compare_class = _generate_new_struct()
+        to_compare_class._fields_ = [("member", ctypes.c_int)]
+        to_compare = to_compare_class()
+        to_compare.member == 0
+
+        try:
+            self.assertEqual(test_struct.member, to_compare.member)
+        except AttributeError as ex:
+            # Fail the test
+            self.assertFalse(True, ex)
+
+        self.assertEqual(size_of, ctypes.sizeof(to_compare))
+
+    def test15(self):
+        self.impl_test_whitespace("Test15")
+
+    def test16(self):
+        self.impl_test_whitespace("Test16")
+
+    def test17(self):
+        self.impl_test_whitespace("Test17")
+
+    def test18(self):
+        self.impl_test_whitespace("Test18")
+
+    def test19(self):
+        self.impl_test_whitespace("Test19")
+
+    def test20(self):
+        self.impl_test_whitespace("Test20")
+
 
 def run_test():
     """
@@ -667,6 +707,14 @@ def run_test():
 
     # Default runtime buffer handler tests
     suite.addTest(C2PyTest('test14', runtime_buffer_handler))
+
+    # Struct with whitespace parsing test
+    suite.addTest(C2PyTest('test15', binary_file_handler))
+    suite.addTest(C2PyTest('test16', binary_file_handler))
+    suite.addTest(C2PyTest('test17', binary_file_handler))
+    suite.addTest(C2PyTest('test18', binary_file_handler))
+    suite.addTest(C2PyTest('test19', binary_file_handler))
+    suite.addTest(C2PyTest('test20', binary_file_handler))
 
     unittest.TextTestRunner().run(suite)
 

@@ -37,6 +37,14 @@ int main()
 	//Test11 hello = { "Hello, world!", { "ran", "dom", " st", "rin", "g.." } };
 	Test11 hello;
 	Test12 hacker = malloc(sizeof(struct Test12) + sizeof(char) * N);
+
+	Test15 whitespace1 = {0};
+	Test16 whitespace2 = {0};
+	Test17 whitespace3 = {0};
+	Test18 whitespace4 = {0};
+	struct Test19 whitespace5 = {0};
+	struct Test20 whitespace6 = {0};
+
 	int i;
 	FILE *fileWriter = NULL;
 
@@ -61,6 +69,14 @@ int main()
 	fwrite(&test10, sizeof(union Test10), 1, fileWriter);
 	fwrite(&hello, sizeof(Test11), 1, fileWriter);
 	fwrite(hacker, sizeof(struct Test12), 1, fileWriter);
+
+	fwrite(&whitespace1, sizeof(Test15), 1, fileWriter);
+	fwrite(&whitespace2, sizeof(Test16), 1, fileWriter);
+	fwrite(&whitespace3, sizeof(Test17), 1, fileWriter);
+	fwrite(&whitespace4, sizeof(Test18), 1, fileWriter);
+	fwrite(&whitespace5, sizeof(struct Test19), 1, fileWriter);
+	fwrite(&whitespace6, sizeof(struct Test20), 1, fileWriter);
+
 	fclose(fileWriter);
 
 	// For debug purposes
