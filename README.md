@@ -62,6 +62,12 @@ All you need to do is add a flag to your compilation process to keep these files
 ## Tests
 All test related files can be found under the 'tests\' directory. 
 This package comes with C source files and headers, to be used in conjunction with the Python test.
+
+Compiling required C test code and runing the test can be done in a single line, like so (in this example we're at the root directory of the C2Py repository).
+```
+cd C2Py/tests/ && make && cd ../../ && python3 -c 'import C2Py.tests.test as test; test.run_test()'
+```
+
 To compile and receive the relevant files:
 
 1. Run a 'make' command when in the 'tests\' directory (this requires having a compiler like gcc installed).
